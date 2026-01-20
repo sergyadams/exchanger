@@ -1,73 +1,73 @@
 #!/bin/bash
 
+# Полностью автоматический деплой
+# Требуется: токен с правами repo (для создания репозитория)
+
 set -e
 
-echo "🚀 Автоматический деплой проекта"
-echo ""
-
-# Проверка авторизации GitHub
-if ! gh auth status &> /dev/null; then
-    echo "🔐 Авторизация в GitHub..."
-    echo ""
-    echo "Откроется браузер для авторизации"
-    echo "Или используйте код из вывода выше"
-    echo ""
-    gh auth login --web
-    echo ""
-    echo "✅ Авторизация завершена"
-fi
-
-echo "📦 Создаю GitHub репозиторий..."
+GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
 REPO_NAME="exchanger"
 
-# Проверка существования репозитория
-if gh repo view $REPO_NAME &> /dev/null; then
-    echo "⚠️  Репозиторий уже существует, подключаю..."
-    git remote remove origin 2>/dev/null || true
-    git remote add origin https://github.com/$(gh api user --jq .login)/$REPO_NAME.git
+echo "🚀 Начинаю автоматический деплой..."
+
+# 1. Получаем username
+echo "📋 Получаю информацию о пользователе..."
+GITHUB_USER=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user | python3 -c "import sys, json; print(json.load(sys.stdin)['login'])")
+echo "✅ Пользователь: $GITHUB_USER"
+
+# 2. Проверяем существование репозитория
+echo "🔍 Проверяю репозиторий..."
+REPO_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USER/$REPO_NAME)
+
+if [ "$REPO_EXISTS" = "200" ]; then
+    echo "✅ Репозиторий уже существует"
 else
-    echo "✅ Создаю новый репозиторий..."
-    gh repo create $REPO_NAME --public --source=. --remote=origin --push
+    echo "⚠️  Репозиторий не найден. Токен не имеет прав на создание."
+    echo "📝 Создайте репозиторий вручную: https://github.com/new"
+    echo "   - Название: $REPO_NAME"
+    echo "   - Public"
+    echo "   - БЕЗ README, .gitignore, license"
+    echo ""
+    read -p "Нажмите Enter после создания репозитория..."
 fi
 
-echo ""
-echo "✅ Репозиторий готов: https://github.com/$(gh api user --jq .login)/$REPO_NAME"
-echo ""
+# 3. Настраиваем git
+echo "⚙️  Настраиваю git..."
+git remote remove origin 2>/dev/null || true
+git remote add origin "https://$GITHUB_TOKEN@github.com/$GITHUB_USER/$REPO_NAME.git"
+git branch -M main
 
-# Push если еще не запушено
-if ! git ls-remote --heads origin main &> /dev/null; then
-    echo "📤 Загружаю код в GitHub..."
-    git branch -M main
-    git push -u origin main
+# 4. Загружаем код
+echo "📤 Загружаю код..."
+if git push -u origin main 2>&1; then
+    echo ""
+    echo "✅ Код загружен!"
+    echo "📍 Репозиторий: https://github.com/$GITHUB_USER/$REPO_NAME"
+    echo ""
+    echo "📋 Следующие шаги:"
+    echo ""
+    echo "1️⃣  FRONTEND (Vercel):"
+    echo "   - Откройте: https://vercel.com/new"
+    echo "   - Import Git Repository → выберите $REPO_NAME"
+    echo "   - Root Directory: frontend"
+    echo "   - Framework Preset: Next.js"
+    echo "   - Deploy"
+    echo ""
+    echo "2️⃣  BACKEND (Railway):"
+    echo "   - Откройте: https://railway.app/new"
+    echo "   - Deploy from GitHub repo → выберите $REPO_NAME"
+    echo "   - Root Directory: backend"
+    echo "   - Add PostgreSQL"
+    echo "   - Variables:"
+    echo "     PORT=3001"
+    echo "     NODE_ENV=production"
+    echo "     DATABASE_URL=<из PostgreSQL>"
+    echo "   - Deploy"
+    echo ""
 else
-    echo "✅ Код уже загружен"
+    echo ""
+    echo "❌ Ошибка загрузки. Проверьте:"
+    echo "   - Репозиторий создан: https://github.com/$GITHUB_USER/$REPO_NAME"
+    echo "   - Токен имеет права на запись"
+    exit 1
 fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ GitHub репозиторий готов!"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "📋 Теперь задеплойте через веб-интерфейсы:"
-echo ""
-echo "1️⃣  FRONTEND (Vercel):"
-echo "   → https://vercel.com"
-echo "   → Add New Project"
-echo "   → Выберите репозиторий: exchanger"
-echo "   → Root Directory: frontend ⚠️"
-echo "   → Deploy"
-echo ""
-echo "2️⃣  BACKEND (Railway):"
-echo "   → https://railway.app"
-echo "   → New Project → Deploy from GitHub"
-echo "   → Выберите: exchanger"
-echo "   → Root Directory: backend"
-echo "   → Добавьте PostgreSQL"
-echo "   → Variables: PORT=3001, NODE_ENV=production"
-echo ""
-echo "3️⃣  После деплоя backend:"
-echo "   → Выполните миграции (Railway → Deployments → Run Command)"
-echo "   → Обновите NEXT_PUBLIC_API_URL в Vercel"
-echo ""
-echo "📖 Подробная инструкция: DEPLOY_NOW.md"
-echo ""
