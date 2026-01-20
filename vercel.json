@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd .. && cd shared && npm install && npx tsc && cd ../frontend && npm run build",
+  "buildCommand": "cd .. && (cd shared && npm install && npx tsc) && cd frontend && npm run build",
   "outputDirectory": ".next",
   "installCommand": "cd .. && npm install",
   "framework": "nextjs"
