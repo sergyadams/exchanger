@@ -5,7 +5,7 @@
 
 set -e
 
-GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 REPO_NAME="exchanger"
 
 echo "🚀 Начинаю автоматический деплой..."
