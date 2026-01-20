@@ -14,7 +14,7 @@ echo "  3. Задеплоит backend на Railway"
 echo "  4. Настроит переменные окружения"
 echo "  5. Выполнит миграции БД"
 echo ""
-read -p "Нажмите Enter для продолжения..."
+# Автоматический запуск без ожидания
 
 # Установка CLI
 if ! command -v vercel &> /dev/null; then
