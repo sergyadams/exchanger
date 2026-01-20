@@ -21,6 +21,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Тестовый маршрут для диагностики
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
+});
+
 // Загрузка маршрутов
 app.use('/api/exchange', exchangeRouter);
 app.use('/api/rates', ratesRouter);
