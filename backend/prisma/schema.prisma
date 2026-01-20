@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Currency {
+  code        String   @id
+  name        String
+  type        String
+  network     String?
+  isManual    Boolean  @default(false)
+  precision   Int      @default(8)
+  minAmount   Decimal
+  maxAmount   Decimal
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fromPairs ExchangePair[] @relation("FromCurrency")
+  toPairs   ExchangePair[] @relation("ToCurrency")
+  ordersFrom Order[]        @relation("FromCurrency")
+  ordersTo   Order[]        @relation("ToCurrency")
+
+  @@index([enabled])
+  @@index([type])
+}
+
+model ExchangePair {
+  id                String   @id @default(uuid())
+  fromCurrencyCode  String
+  toCurrencyCode    String
+  enabled           Boolean  @default(true)
+  feePct            Decimal
+  rateSource        String
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  fromCurrency Currency @relation("FromCurrency", fields: [fromCurrencyCode], references: [code])
+  toCurrency   Currency @relation("ToCurrency", fields: [toCurrencyCode], references: [code])
+
+  @@unique([fromCurrencyCode, toCurrencyCode])
+  @@index([fromCurrencyCode])
+  @@index([toCurrencyCode])
+  @@index([enabled])
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  shortId       String   @unique
+  fromCurrencyCode String
+  toCurrencyCode   String
+  fromNetwork   String?
+  toNetwork     String?
+  amountFrom    Decimal
+  amountTo      Decimal
+  rate          Decimal
+  feePct        Decimal
+  feeAmount     Decimal
+  destinationJson String
+  payoutMethod  String?
+  payoutDetails String?
+  email         String?
+  payinAddress  String
+  status        String
+  expiresAt     DateTime
+  adminNote     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  fromCurrency Currency @relation("FromCurrency", fields: [fromCurrencyCode], references: [code])
+  toCurrency   Currency @relation("ToCurrency", fields: [toCurrencyCode], references: [code])
+  payinWalletId String?
+  payinWallet  PayInWallet? @relation(fields: [payinWalletId], references: [id])
+  statusEvents OrderStatusEvent[]
+
+  @@index([shortId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([fromCurrencyCode])
+  @@index([toCurrencyCode])
+}
+
+model OrderStatusEvent {
+  id         String   @id @default(uuid())
+  orderId    String
+  fromStatus String?
+  toStatus   String
+  changedAt  DateTime @default(now())
+  actor      String
+  note       String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([changedAt])
+}
+
+model PayInWallet {
+  id           String    @id @default(uuid())
+  currencyCode String
+  network      String
+  address      String
+  label        String?
+  isActive     Boolean   @default(true)
+  priority     Int       @default(100)
+  usageCount   Int       @default(0)
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders Order[]
+
+  @@unique([currencyCode, network, address])
+  @@index([currencyCode, network, isActive])
+  @@index([isActive, priority, usageCount])
+}
