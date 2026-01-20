@@ -21,30 +21,31 @@ app.get('/api/test', (req, res) => {
 });
 
 // Загрузка маршрутов с обработкой ошибок
+import { currenciesRouter } from './routes/currencies.js';
+import { pairsRouter } from './routes/pairs.js';
+import { ratesRouter } from './routes/rates.js';
+import { exchangeRouter } from './routes/exchange.js';
+import { adminRouter } from './routes/admin.js';
+import { adminWalletsRouter } from './routes/adminWallets.js';
+
 try {
   logger.info('Loading routes...');
   
-  const { currenciesRouter } = await import('./routes/currencies.js');
   app.use('/api/currencies', currenciesRouter);
   logger.info('✓ Currencies routes loaded');
   
-  const { pairsRouter } = await import('./routes/pairs.js');
   app.use('/api/pairs', pairsRouter);
   logger.info('✓ Pairs routes loaded');
   
-  const { ratesRouter } = await import('./routes/rates.js');
   app.use('/api/rates', ratesRouter);
   logger.info('✓ Rates routes loaded');
   
-  const { exchangeRouter } = await import('./routes/exchange.js');
   app.use('/api/exchange', exchangeRouter);
   logger.info('✓ Exchange routes loaded');
   
-  const { adminRouter } = await import('./routes/admin.js');
   app.use('/api/admin', adminRouter);
   logger.info('✓ Admin routes loaded');
   
-  const { adminWalletsRouter } = await import('./routes/adminWallets.js');
   app.use('/api/admin', adminWalletsRouter);
   logger.info('✓ Admin wallets routes loaded');
   
