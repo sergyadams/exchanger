@@ -215,13 +215,13 @@ export default function OrderPage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      value={`${Number(order.amountFrom)} ${order.fromCurrency}`}
+                      value={`${Number(order.amountFrom)} ${order.fromCurrencyCode}`}
                       readOnly
                       className="input flex-1 bg-gray-50"
                     />
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`${Number(order.amountFrom)} ${order.fromCurrency}`);
+                        navigator.clipboard.writeText(`${Number(order.amountFrom)} ${order.fromCurrencyCode}`);
                         addToast('Скопировано в буфер обмена', 'success');
                       }}
                       className="btn-secondary"

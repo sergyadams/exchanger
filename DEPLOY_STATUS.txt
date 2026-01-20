@@ -1,0 +1,32 @@
+СТАТУС ДЕПЛОЯ:
+==============
+
+ПРОБЛЕМЫ:
+---------
+1. Vercel: npm token expired - нужен новый токен или проверка прав
+2. Railway: токен не работает - возможно неправильный формат
+
+РЕШЕНИЕ:
+--------
+Для продолжения деплоя:
+
+1. VERCEL - проверьте токен:
+   - https://vercel.com/account/tokens
+   - Убедитесь что токен активен
+   - Или создайте новый токен
+
+2. RAILWAY - используйте веб-интерфейс:
+   - https://railway.app/new
+   - Deploy from GitHub → выберите exchanger
+   - Root Directory: backend
+   - Add PostgreSQL
+   - Variables: PORT=3001, NODE_ENV=production
+
+3. После деплоя Railway:
+   - Скопируйте URL backend
+   - В Vercel → Settings → Environment Variables
+   - Добавьте: NEXT_PUBLIC_API_URL = <railway_url>
+
+АЛЬТЕРНАТИВА:
+-------------
+Используйте веб-интерфейсы обоих сервисов - это проще и быстрее.
