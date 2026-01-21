@@ -6,15 +6,13 @@ cmds = ["npm ci"]
 
 [phases.build]
 cmds = [
-  "cd .. && npm run build:shared",
-  "cp prisma/schema.production.prisma prisma/schema.prisma",
-  "npm run prisma:generate",
+  "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy skipped'",
   "npm run build"
 ]
 
 [phases.start]
 cmds = [
-  "cp prisma/schema.production.prisma prisma/schema.prisma",
+  "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy skipped'",
   "npx prisma migrate deploy || npx prisma db push || echo 'Migration failed'",
   "npm run prisma:seed || echo 'Seed failed'",
   "npm start"
