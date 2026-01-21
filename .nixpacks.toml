@@ -15,7 +15,7 @@ cmds = [
 [phases.start]
 cmds = [
   "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || true",
-  "cd backend && npx prisma migrate deploy || npx prisma db push || true",
-  "cd backend && npm run prisma:seed || true",
+  "cd backend && npx prisma migrate deploy || npx prisma db push || echo 'Migration failed, continuing...'",
+  "cd backend && npm run prisma:seed || echo 'Seed failed, continuing...'",
   "cd backend && npm start"
 ]
