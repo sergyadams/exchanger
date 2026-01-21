@@ -40,19 +40,23 @@ app.get('/test', (req, res) => {
 
 // ВСЕ маршруты БЕЗ /api префикса (Railway перехватывает /api/*)
 app.get('/currencies', async (req, res) => {
-  logger.info('[CURRENCIES] Currencies route called');
+  logger.info('[CURRENCIES] ====== CURRENCIES ROUTE CALLED ======');
+  logger.info(`[CURRENCIES] Request from: ${req.headers.host || 'unknown'}`);
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
     const service = new CurrencyService();
+    logger.info('[CURRENCIES] CurrencyService imported, fetching currencies...');
     let currencies = await service.getAllCurrencies();
-    logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
+    logger.info(`[CURRENCIES] Fetched ${currencies.length} currencies from DB`);
     
     // Если валют нет - создаем их напрямую
     if (currencies.length === 0) {
-      logger.warn('[CURRENCIES] No currencies found, creating them directly...');
+      logger.warn('[CURRENCIES] ====== NO CURRENCIES FOUND, CREATING THEM ======');
       try {
+        logger.info('[CURRENCIES] Importing prisma and shared types...');
         const { prisma } = await import('./utils/prisma.js');
         const { CurrencyType, NetworkType } = await import('@exchanger/shared');
+        logger.info('[CURRENCIES] Imports successful, preparing currency data...');
         
         // Создаем основные валюты
         const currencyData = [
