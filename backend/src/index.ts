@@ -64,15 +64,23 @@ app.get('/currencies', async (req, res) => {
           const { prisma } = await import('./utils/prisma.js');
           const { CurrencyType, NetworkType } = await import('@exchanger/shared');
           
+          // Создаем валюты по одной, чтобы избежать дубликатов
           const currencyData = [
             { code: 'BTC', name: 'Bitcoin', type: CurrencyType.CRYPTO, network: NetworkType.BTC, isManual: false, precision: 8, minAmount: 0.0001, maxAmount: 10, enabled: true },
             { code: 'ETH', name: 'Ethereum', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 8, minAmount: 0.001, maxAmount: 100, enabled: true },
             { code: 'USDT_TRC20', name: 'Tether (TRC20)', type: CurrencyType.CRYPTO, network: NetworkType.TRON, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
           ];
-          await prisma.currency.createMany({
-            data: currencyData as any,
-            skipDuplicates: true,
-          });
+          for (const currency of currencyData) {
+            try {
+              await prisma.currency.upsert({
+                where: { code: currency.code },
+                update: {},
+                create: currency as any,
+              });
+            } catch (e) {
+              // Игнорируем ошибки дубликатов
+            }
+          }
           logger.info('[CURRENCIES] Created currencies directly');
           currencies = await service.getAllCurrencies();
         } catch (directError: any) {
