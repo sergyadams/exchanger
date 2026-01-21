@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { CurrencyType, NetworkType, type Currency } from '@exchanger/shared';
 import { prisma } from '../utils/prisma.js';
+import { logger } from '../utils/logger.js';
 
 export class CurrencyService {
   async getAllCurrencies(): Promise<Currency[]> {
@@ -23,9 +24,11 @@ export class CurrencyService {
       }));
     } catch (error: any) {
       // Если база данных пустая или не инициализирована, возвращаем пустой массив
-      if (error?.code === 'P2002' || error?.code === 'P2025' || error?.message?.includes('does not exist')) {
+      if (error?.code === 'P2002' || error?.code === 'P2025' || error?.message?.includes('does not exist') || error?.message?.includes('DATABASE_URL')) {
+        logger.error('Database error, returning empty array:', error);
         return [];
       }
+      logger.error('CurrencyService error:', error);
       throw error;
     }
   }
