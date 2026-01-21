@@ -1,0 +1,81 @@
+name: Auto Deploy Backend and Setup Vercel
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'shared/**'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.deploy_backend == 'true'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm install
+          cd shared && npm install && cd ..
+          cd backend && npm install && cd ..
+      
+      - name: Build shared
+        run: npm run build:shared
+      
+      - name: Build backend
+        run: cd backend && npm run build
+      
+      - name: Deploy to Railway
+        if: env.RAILWAY_TOKEN != ''
+        uses: bervProject/railway-deploy@v0.4.1
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: backend
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: backend
+          detach: true
+  
+  setup-vercel-env:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: needs.deploy-backend.result == 'success'
+    
+    steps:
+      - name: Get Railway Service URL
+        id: railway_url
+        run: |
+          # Получаем URL из Railway через API
+          URL=$(curl -s "https://backboard.railway.app/graphql/v2" \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"{ me { projects { edges { node { services { edges { node { id name } } } } } } } }"}' \
+            | jq -r '.data.me.projects.edges[0].node.services.edges[0].node.id' 2>/dev/null || echo "")
+          
+          if [ -n "$URL" ]; then
+            echo "url=$URL" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Не удалось получить URL автоматически"
+          fi
+      
+      - name: Set Vercel Environment Variable
+        if: steps.railway_url.outputs.url != ''
+        run: |
+          curl -X POST "https://api.vercel.com/v10/projects/prj_YBzwmS6wxXAVo5aD6cdU801x3wHP/env" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"key\": \"NEXT_PUBLIC_API_URL\",
+              \"value\": \"${{ steps.railway_url.outputs.url }}\",
+              \"type\": \"encrypted\",
+              \"target\": [\"production\", \"preview\", \"development\"]
+            }"
