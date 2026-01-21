@@ -6,15 +6,15 @@ cmds = ["npm ci"]
 
 [phases.build]
 cmds = [
-  "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
-  "npm run build"
+  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
+  "cd backend && npm run build"
 ]
 
 [phases.start]
 cmds = [
-  "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
-  "npx prisma migrate deploy || npx prisma db push || echo 'Migration failed'",
+  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
+  "cd backend && npx prisma migrate deploy || npx prisma db push || echo 'Migration failed'",
   "sleep 3",
-  "npx tsx src/prisma/seed.ts || echo 'Seed failed, continuing...'",
-  "npm start"
+  "cd backend && npx tsx src/prisma/seed.ts || echo 'Seed failed, continuing...'",
+  "cd backend && npm start"
 ]
