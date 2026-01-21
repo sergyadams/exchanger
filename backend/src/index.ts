@@ -75,21 +75,38 @@ app.get('/currencies', async (req, res) => {
           { code: 'EUR_CASH', name: 'EUR (Cash)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 50, maxAmount: 5000, enabled: true },
         ];
         
+        let createdCount = 0;
         for (const currency of currencyData) {
           try {
-            await prisma.currency.upsert({
+            const result = await prisma.currency.upsert({
               where: { code: currency.code },
               update: {},
               create: currency as any,
             });
+            createdCount++;
+            logger.info(`[CURRENCIES] Created/updated ${currency.code}`);
           } catch (e: any) {
-            logger.warn(`[CURRENCIES] Failed to create ${currency.code}:`, e?.message);
+            logger.error(`[CURRENCIES] Failed to create ${currency.code}:`, {
+              message: e?.message,
+              code: e?.code,
+              stack: e?.stack
+            });
           }
         }
         
-        logger.info('[CURRENCIES] Created currencies, fetching again...');
+        logger.info(`[CURRENCIES] Created ${createdCount} currencies, fetching again...`);
         currencies = await service.getAllCurrencies();
         logger.info(`[CURRENCIES] After create: ${currencies.length} currencies`);
+        
+        // Если все еще пусто - возвращаем ошибку с деталями
+        if (currencies.length === 0) {
+          logger.error('[CURRENCIES] Still no currencies after creation attempt');
+          return res.status(500).json({ 
+            error: 'Failed to create currencies',
+            currencies: [],
+            message: 'Database may not be initialized. Check Railway logs.'
+          });
+        }
       } catch (directError: any) {
         logger.error('[CURRENCIES] Direct create failed:', directError);
       }
