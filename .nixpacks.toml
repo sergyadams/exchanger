@@ -7,12 +7,14 @@ cmds = ["npm ci"]
 [phases.build]
 cmds = [
   "npm run build:shared",
+  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || true",
   "cd backend && npm run prisma:generate",
   "cd backend && npm run build"
 ]
 
 [phases.start]
 cmds = [
+  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || true",
   "cd backend && npx prisma migrate deploy || npx prisma db push || true",
   "cd backend && npm run prisma:seed || true",
   "cd backend && npm start"
