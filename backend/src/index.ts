@@ -11,8 +11,19 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Логирование всех запросов
+app.use((req, res, next) => {
+  logger.info(`[${req.method}] ${req.url}`, { 
+    path: req.path, 
+    originalUrl: req.originalUrl,
+    baseUrl: req.baseUrl 
+  });
+  next();
+});
+
 // Health check
 app.get('/health', (req, res) => {
+  logger.info('Health check called');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -85,6 +96,22 @@ try {
 // Fallback удален - он перехватывал все запросы
 // Express автоматически вернет 404 для несуществующих маршрутов
 
+// Добавляем обработчик всех маршрутов для отладки
+app.use('*', (req, res, next) => {
+  logger.info(`[FALLBACK] ${req.method} ${req.originalUrl}`, {
+    path: req.path,
+    originalUrl: req.originalUrl,
+    baseUrl: req.baseUrl,
+    url: req.url
+  });
+  next();
+});
+
 app.listen(PORT, () => {
   logger.info(`Backend server running on http://localhost:${PORT}`);
+  logger.info('Registered routes:');
+  logger.info('  GET /health');
+  logger.info('  GET /test');
+  logger.info('  GET /api/test');
+  logger.info('  GET /api/currencies');
 });
