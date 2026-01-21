@@ -8,16 +8,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Тестовый маршрут в самом начале
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
+});
+
 app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Тестовый маршрут для диагностики (ДО загрузки других маршрутов)
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
 // Загрузка маршрутов с обработкой ошибок
@@ -65,7 +65,7 @@ try {
   });
 }
 
-// Fallback для всех остальных маршрутов
+// Fallback для всех остальных маршрутов (должен быть последним)
 app.use('*', (req, res) => {
   logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
