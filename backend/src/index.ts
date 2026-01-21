@@ -8,20 +8,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
-
-// Health check
+// Health check - ПЕРВЫМ, до middleware
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Тестовый маршрут
+// Тестовый маршрут - ВТОРЫМ
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
-// Временный маршрут для валют
+// Временный маршрут для валют - ТРЕТЬИМ
 app.get('/api/currencies', async (req, res) => {
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
@@ -37,6 +34,10 @@ app.get('/api/currencies', async (req, res) => {
     });
   }
 });
+
+// Middleware - ПОСЛЕ маршрутов
+app.use(cors());
+app.use(express.json());
 
 // Загрузка остальных маршрутов (НЕ перезаписываем /api/currencies)
 try {
