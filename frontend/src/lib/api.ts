@@ -1,5 +1,6 @@
 import { type CreateOrderRequest, type OrderWithTimeline, type Currency, type ExchangePair } from '@exchanger/shared';
 
+// Backend API URL - configured via environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function getCurrencies(): Promise<{ currencies: Currency[] }> {
