@@ -74,13 +74,8 @@ try {
   logger.error('Error stack:', error?.stack);
 }
 
-// Fallback для всех остальных маршрутов (должен быть последним)
-// НЕ используем app.all('*') - он перехватывает все запросы
-// Вместо этого регистрируем только для необработанных путей
-app.use((req, res) => {
-  logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({ error: 'Not Found', path: req.originalUrl });
-});
+// Fallback удален - он перехватывал все запросы
+// Express автоматически вернет 404 для несуществующих маршрутов
 
 app.listen(PORT, () => {
   logger.info(`Backend server running on http://localhost:${PORT}`);
