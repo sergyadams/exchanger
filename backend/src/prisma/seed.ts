@@ -280,11 +280,17 @@ async function main() {
   console.log('Seeded currencies, pairs, wallets and test orders');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Экспортируем main для использования в других модулях
+export default main;
+
+// Если запускается напрямую
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

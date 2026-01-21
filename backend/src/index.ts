@@ -47,19 +47,35 @@ app.get('/currencies', async (req, res) => {
     let currencies = await service.getAllCurrencies();
     logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
     
-    // Если валют нет - пытаемся запустить seed
+    // Если валют нет - запускаем seed напрямую
     if (currencies.length === 0) {
-      logger.warn('[CURRENCIES] No currencies found, attempting to seed...');
+      logger.warn('[CURRENCIES] No currencies found, running seed directly...');
       try {
-        const { exec } = await import('child_process');
-        const { promisify } = await import('util');
-        const execAsync = promisify(exec);
-        await execAsync('npx tsx src/prisma/seed.ts', { cwd: process.cwd(), timeout: 30000 });
+        const seedModule = await import('./prisma/seed.js');
+        await seedModule.default();
         logger.info('[CURRENCIES] Seed completed, fetching currencies again...');
         currencies = await service.getAllCurrencies();
+        logger.info(`[CURRENCIES] After seed: ${currencies.length} currencies`);
       } catch (seedError: any) {
         logger.error('[CURRENCIES] Seed failed:', seedError);
-        // Возвращаем пустой массив, но логируем ошибку
+        // Пробуем создать валюты напрямую
+        try {
+          const { prisma } = await import('./utils/prisma.js');
+          const { CurrencyType, NetworkType } = await import('@exchanger/shared');
+          
+          await prisma.currency.createMany({
+            data: [
+              { code: 'BTC', name: 'Bitcoin', type: CurrencyType.CRYPTO, network: NetworkType.BTC, isManual: false, precision: 8, minAmount: 0.0001, maxAmount: 10, enabled: true },
+              { code: 'ETH', name: 'Ethereum', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 8, minAmount: 0.001, maxAmount: 100, enabled: true },
+              { code: 'USDT_TRC20', name: 'Tether (TRC20)', type: CurrencyType.CRYPTO, network: NetworkType.TRON, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
+            ],
+            skipDuplicates: true,
+          });
+          logger.info('[CURRENCIES] Created currencies directly');
+          currencies = await service.getAllCurrencies();
+        } catch (directError: any) {
+          logger.error('[CURRENCIES] Direct create failed:', directError);
+        }
       }
     }
     
