@@ -52,7 +52,8 @@ app.get('/currencies', async (req, res) => {
       logger.warn('[CURRENCIES] No currencies found, running seed directly...');
       try {
         const seedModule = await import('./prisma/seed.js');
-        await seedModule.default();
+        const seedMain = seedModule.default || seedModule;
+        await seedMain();
         logger.info('[CURRENCIES] Seed completed, fetching currencies again...');
         currencies = await service.getAllCurrencies();
         logger.info(`[CURRENCIES] After seed: ${currencies.length} currencies`);

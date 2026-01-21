@@ -283,8 +283,8 @@ async function main() {
 // Экспортируем main для использования в других модулях
 export default main;
 
-// Если запускается напрямую
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Если запускается напрямую (через tsx или node)
+if (import.meta.url.endsWith(process.argv[1]) || process.argv[1]?.includes('seed')) {
   main()
     .catch((e) => {
       console.error(e);
