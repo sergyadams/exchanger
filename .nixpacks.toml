@@ -7,14 +7,14 @@ cmds = ["npm ci"]
 [phases.build]
 cmds = [
   "npm run build:shared",
-  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || true",
+  "cd backend && if [ -f prisma/schema.production.prisma ]; then cp prisma/schema.production.prisma prisma/schema.prisma; echo 'Using PostgreSQL schema'; else echo 'Production schema not found, using default'; fi",
   "cd backend && npm run prisma:generate",
   "cd backend && npm run build"
 ]
 
 [phases.start]
 cmds = [
-  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || true",
+  "cd backend && if [ -f prisma/schema.production.prisma ]; then cp prisma/schema.production.prisma prisma/schema.prisma; echo 'Using PostgreSQL schema for start'; else echo 'Production schema not found'; fi",
   "cd backend && npx prisma migrate deploy || npx prisma db push || echo 'Migration failed, continuing...'",
   "cd backend && npm run prisma:seed || echo 'Seed failed, continuing...'",
   "cd backend && npm start"

@@ -81,7 +81,12 @@ try {
 }
 
 // Fallback для всех остальных маршрутов (должен быть последним)
+// НО НЕ для /api/currencies - он уже зарегистрирован выше
 app.use('*', (req, res) => {
+  // Пропускаем /api/currencies - он обрабатывается выше
+  if (req.path === '/api/currencies' || req.path.startsWith('/api/currencies/')) {
+    return;
+  }
   logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 });
