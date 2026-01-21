@@ -117,6 +117,13 @@ app.use((req, res, next) => {
   });
 });
 
+// Выводим все зарегистрированные маршруты
+app._router?.stack?.forEach((middleware: any) => {
+  if (middleware.route) {
+    logger.info(`[ROUTE] ${Object.keys(middleware.route.methods).join(',').toUpperCase()} ${middleware.route.path}`);
+  }
+});
+
 app.listen(PORT, () => {
   logger.info(`Backend server running on http://localhost:${PORT}`);
   logger.info('Registered routes:');
@@ -124,4 +131,14 @@ app.listen(PORT, () => {
   logger.info('  GET /test');
   logger.info('  GET /api/test');
   logger.info('  GET /api/currencies');
+  
+  // Тест: проверяем, что маршруты действительно зарегистрированы
+  const routes: string[] = [];
+  app._router?.stack?.forEach((middleware: any) => {
+    if (middleware.route) {
+      routes.push(`${Object.keys(middleware.route.methods).join(',').toUpperCase()} ${middleware.route.path}`);
+    }
+  });
+  logger.info(`[ROUTES COUNT] Total routes registered: ${routes.length}`);
+  routes.forEach(route => logger.info(`[ROUTE] ${route}`));
 });
