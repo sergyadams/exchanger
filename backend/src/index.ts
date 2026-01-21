@@ -8,17 +8,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Health check - ПЕРВЫМ
+app.use(cors());
+app.use(express.json());
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Тестовый маршрут - ВТОРЫМ
+// Тестовый маршрут
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
-// Временный маршрут для валют - ТРЕТЬИМ
+// Временный маршрут для валют
 app.get('/api/currencies', async (req, res) => {
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
@@ -27,22 +30,13 @@ app.get('/api/currencies', async (req, res) => {
     res.json({ currencies });
   } catch (error: any) {
     logger.error('Currencies error:', error);
-    logger.error('Error details:', {
-      message: error?.message,
-      code: error?.code,
-      stack: error?.stack
-    });
     res.status(500).json({ 
       error: 'Failed to fetch currencies',
       message: error?.message || 'Unknown error',
-      code: error?.code || 'UNKNOWN',
-      details: process.env.DATABASE_URL ? 'DATABASE_URL is set' : 'DATABASE_URL is NOT set'
+      code: error?.code || 'UNKNOWN'
     });
   }
 });
-
-app.use(cors());
-app.use(express.json());
 
 // Загрузка остальных маршрутов (НЕ перезаписываем /api/currencies)
 try {
