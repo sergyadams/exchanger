@@ -16,54 +16,61 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Тестовый маршрут
+// Тестовый маршрут - РАБОТАЕТ ВСЕГДА
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
-// Загрузка маршрутов синхронно (исправлено)
-import { currenciesRouter } from './routes/currencies.js';
-import { pairsRouter } from './routes/pairs.js';
-import { ratesRouter } from './routes/rates.js';
-import { exchangeRouter } from './routes/exchange.js';
-import { adminRouter } from './routes/admin.js';
-import { adminWalletsRouter } from './routes/adminWallets.js';
+// Временный маршрут для валют (пока не загрузились основные)
+app.get('/api/currencies', async (req, res) => {
+  try {
+    const { CurrencyService } = await import('./services/currencyService.js');
+    const service = new CurrencyService();
+    const currencies = await service.getAllCurrencies();
+    res.json({ currencies });
+  } catch (error: any) {
+    logger.error('Currencies error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch currencies',
+      message: error?.message || 'Unknown error'
+    });
+  }
+});
 
+// Загрузка остальных маршрутов
 try {
   logger.info('Loading routes...');
   
+  const { currenciesRouter } = await import('./routes/currencies.js');
+  // Перезаписываем временный маршрут правильным
   app.use('/api/currencies', currenciesRouter);
   logger.info('✓ Currencies routes loaded');
   
+  const { pairsRouter } = await import('./routes/pairs.js');
   app.use('/api/pairs', pairsRouter);
   logger.info('✓ Pairs routes loaded');
   
+  const { ratesRouter } = await import('./routes/rates.js');
   app.use('/api/rates', ratesRouter);
   logger.info('✓ Rates routes loaded');
   
+  const { exchangeRouter } = await import('./routes/exchange.js');
   app.use('/api/exchange', exchangeRouter);
   logger.info('✓ Exchange routes loaded');
   
+  const { adminRouter } = await import('./routes/admin.js');
   app.use('/api/admin', adminRouter);
   logger.info('✓ Admin routes loaded');
   
+  const { adminWalletsRouter } = await import('./routes/adminWallets.js');
   app.use('/api/admin', adminWalletsRouter);
   logger.info('✓ Admin wallets routes loaded');
   
   logger.info('All routes loaded successfully');
 } catch (error: any) {
-  logger.error('Failed to load routes:', error);
+  logger.error('Failed to load some routes:', error);
   logger.error('Error message:', error?.message);
   logger.error('Error stack:', error?.stack);
-  
-  // Fallback route для ошибок
-  app.use('/api/*', (req, res) => {
-    res.status(500).json({ 
-      error: 'Routes not loaded', 
-      message: error?.message || 'Unknown error',
-      path: req.originalUrl 
-    });
-  });
 }
 
 // Fallback для всех остальных маршрутов (должен быть последним)
