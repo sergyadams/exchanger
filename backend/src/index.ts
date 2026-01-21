@@ -16,6 +16,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Простой тест - без async
+app.get('/test', (req, res) => {
+  res.json({ message: 'Simple test works' });
+});
+
 // Тестовый маршрут
 app.get('/api/test', (req, res) => {
   logger.info('Test route called');
