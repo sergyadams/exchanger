@@ -30,9 +30,16 @@ app.get('/api/currencies', async (req, res) => {
     res.json({ currencies });
   } catch (error: any) {
     logger.error('Currencies error:', error);
+    logger.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack
+    });
     res.status(500).json({ 
       error: 'Failed to fetch currencies',
-      message: error?.message || 'Unknown error'
+      message: error?.message || 'Unknown error',
+      code: error?.code || 'UNKNOWN',
+      details: process.env.DATABASE_URL ? 'DATABASE_URL is set' : 'DATABASE_URL is NOT set'
     });
   }
 });
