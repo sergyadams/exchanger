@@ -102,14 +102,26 @@ app.get('/currencies', async (req, res) => {
         currencies = await service.getAllCurrencies();
         logger.info(`[CURRENCIES] After create: ${currencies.length} currencies`);
         
-        // Если все еще пусто - возвращаем ошибку с деталями
+        // Если все еще пусто - проверяем подключение к БД
         if (currencies.length === 0) {
           logger.error('[CURRENCIES] Still no currencies after creation attempt');
-          return res.status(500).json({ 
-            error: 'Failed to create currencies',
-            currencies: [],
-            message: 'Database may not be initialized. Check Railway logs.'
-          });
+          // Пробуем простой запрос к БД для проверки подключения
+          try {
+            const testQuery = await prisma.$queryRaw`SELECT 1 as test`;
+            logger.info('[CURRENCIES] DB connection OK, but currencies not created');
+            return res.status(500).json({ 
+              error: 'Failed to create currencies',
+              currencies: [],
+              message: 'Database connected but currencies not created. Check Railway logs for errors.'
+            });
+          } catch (dbError: any) {
+            logger.error('[CURRENCIES] DB connection failed:', dbError);
+            return res.status(500).json({ 
+              error: 'Database not initialized',
+              currencies: [],
+              message: `Database connection failed: ${dbError?.message || 'Unknown error'}. Run migrations first.`
+            });
+          }
         }
       } catch (directError: any) {
         logger.error('[CURRENCIES] Direct create failed:', directError);
