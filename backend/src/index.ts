@@ -11,12 +11,17 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Логирование всех запросов
+// Логирование всех запросов (ПЕРВЫМ, до всех маршрутов)
 app.use((req, res, next) => {
-  logger.info(`[${req.method}] ${req.url}`, { 
+  logger.info(`[REQUEST] ${req.method} ${req.url}`, { 
     path: req.path, 
     originalUrl: req.originalUrl,
-    baseUrl: req.baseUrl 
+    baseUrl: req.baseUrl,
+    url: req.url,
+    headers: {
+      host: req.headers.host,
+      'user-agent': req.headers['user-agent']
+    }
   });
   next();
 });
