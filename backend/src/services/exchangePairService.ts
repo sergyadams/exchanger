@@ -29,14 +29,12 @@ export class ExchangePairService {
         enabled: true,
       },
       include: {
-        toCurrency: {
-          where: { enabled: true },
-        },
+        toCurrency: true,
       },
     });
 
     return pairs
-      .filter((p) => p.toCurrency.enabled)
+      .filter((p) => p.toCurrency && p.toCurrency.enabled)
       .map((p) => ({
         fromCurrencyCode: p.fromCurrencyCode,
         toCurrencyCode: p.toCurrencyCode,
