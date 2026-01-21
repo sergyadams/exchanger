@@ -81,7 +81,9 @@ try {
 }
 
 // Fallback для всех остальных маршрутов (должен быть последним)
-app.all('*', (req, res) => {
+// НЕ используем app.all('*') - он перехватывает все запросы
+// Вместо этого регистрируем только для необработанных путей
+app.use((req, res) => {
   logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 });
