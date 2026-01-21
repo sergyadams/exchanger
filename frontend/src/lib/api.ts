@@ -3,8 +3,13 @@ import { type CreateOrderRequest, type OrderWithTimeline, type Currency, type Ex
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function getCurrencies(): Promise<{ currencies: Currency[] }> {
-  const response = await fetch(`${API_URL}/api/currencies`);
-  if (!response.ok) throw new Error('Failed to fetch currencies');
+  // Пробуем сначала /api/currencies, если не работает - /currencies
+  let response = await fetch(`${API_URL}/api/currencies`);
+  if (!response.ok) {
+    // Fallback: пробуем без /api префикса
+    response = await fetch(`${API_URL}/currencies`);
+    if (!response.ok) throw new Error('Failed to fetch currencies');
+  }
   return response.json();
 }
 
