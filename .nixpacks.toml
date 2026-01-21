@@ -14,7 +14,7 @@ cmds = [
 cmds = [
   "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
   "npx prisma migrate deploy || npx prisma db push || echo 'Migration failed'",
-  "sleep 2",
-  "npm run prisma:seed || echo 'Seed failed'",
+  "sleep 3",
+  "npx tsx src/prisma/seed.ts || echo 'Seed failed, continuing...'",
   "npm start"
 ]
