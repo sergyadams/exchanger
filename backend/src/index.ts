@@ -47,45 +47,51 @@ app.get('/currencies', async (req, res) => {
     let currencies = await service.getAllCurrencies();
     logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
     
-    // Если валют нет - запускаем seed напрямую
+    // Если валют нет - создаем их напрямую
     if (currencies.length === 0) {
-      logger.warn('[CURRENCIES] No currencies found, running seed directly...');
+      logger.warn('[CURRENCIES] No currencies found, creating them directly...');
       try {
-        const seedModule = await import('./prisma/seed.js');
-        const seedMain = seedModule.default || seedModule;
-        await seedMain();
-        logger.info('[CURRENCIES] Seed completed, fetching currencies again...');
-        currencies = await service.getAllCurrencies();
-        logger.info(`[CURRENCIES] After seed: ${currencies.length} currencies`);
-      } catch (seedError: any) {
-        logger.error('[CURRENCIES] Seed failed:', seedError);
-        // Пробуем создать валюты напрямую
-        try {
-          const { prisma } = await import('./utils/prisma.js');
-          const { CurrencyType, NetworkType } = await import('@exchanger/shared');
-          
-          // Создаем валюты по одной, чтобы избежать дубликатов
-          const currencyData = [
-            { code: 'BTC', name: 'Bitcoin', type: CurrencyType.CRYPTO, network: NetworkType.BTC, isManual: false, precision: 8, minAmount: 0.0001, maxAmount: 10, enabled: true },
-            { code: 'ETH', name: 'Ethereum', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 8, minAmount: 0.001, maxAmount: 100, enabled: true },
-            { code: 'USDT_TRC20', name: 'Tether (TRC20)', type: CurrencyType.CRYPTO, network: NetworkType.TRON, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
-          ];
-          for (const currency of currencyData) {
-            try {
-              await prisma.currency.upsert({
-                where: { code: currency.code },
-                update: {},
-                create: currency as any,
-              });
-            } catch (e) {
-              // Игнорируем ошибки дубликатов
-            }
+        const { prisma } = await import('./utils/prisma.js');
+        const { CurrencyType, NetworkType } = await import('@exchanger/shared');
+        
+        // Создаем основные валюты
+        const currencyData = [
+          { code: 'BTC', name: 'Bitcoin', type: CurrencyType.CRYPTO, network: NetworkType.BTC, isManual: false, precision: 8, minAmount: 0.0001, maxAmount: 10, enabled: true },
+          { code: 'ETH', name: 'Ethereum', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 8, minAmount: 0.001, maxAmount: 100, enabled: true },
+          { code: 'USDT_TRC20', name: 'Tether (TRC20)', type: CurrencyType.CRYPTO, network: NetworkType.TRON, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
+          { code: 'USDT_ERC20', name: 'Tether (ERC20)', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
+          { code: 'USDC', name: 'USD Coin', type: CurrencyType.CRYPTO, network: NetworkType.ETH, isManual: false, precision: 6, minAmount: 10, maxAmount: 50000, enabled: true },
+          { code: 'BNB', name: 'Binance Coin', type: CurrencyType.CRYPTO, network: NetworkType.BSC, isManual: false, precision: 8, minAmount: 0.01, maxAmount: 1000, enabled: true },
+          { code: 'TON', name: 'Toncoin', type: CurrencyType.CRYPTO, network: NetworkType.TON, isManual: false, precision: 8, minAmount: 1, maxAmount: 10000, enabled: true },
+          { code: 'TRX', name: 'Tron', type: CurrencyType.CRYPTO, network: NetworkType.TRON, isManual: false, precision: 6, minAmount: 100, maxAmount: 100000, enabled: true },
+          { code: 'LTC', name: 'Litecoin', type: CurrencyType.CRYPTO, network: NetworkType.LTC, isManual: false, precision: 8, minAmount: 0.01, maxAmount: 500, enabled: true },
+          { code: 'RUB_SBER', name: 'RUB (Sber)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 100, maxAmount: 1000000, enabled: true },
+          { code: 'RUB_TINKOFF', name: 'RUB (Tinkoff)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 100, maxAmount: 1000000, enabled: true },
+          { code: 'RUB_SBP', name: 'RUB (SBP)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 100, maxAmount: 1000000, enabled: true },
+          { code: 'RUB_CASH', name: 'RUB (Cash)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 1000, maxAmount: 500000, enabled: true },
+          { code: 'USD_BANK', name: 'USD (Bank)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 10, maxAmount: 10000, enabled: true },
+          { code: 'USD_CASH', name: 'USD (Cash)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 50, maxAmount: 5000, enabled: true },
+          { code: 'EUR_SEPA', name: 'EUR (SEPA)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 10, maxAmount: 10000, enabled: true },
+          { code: 'EUR_CASH', name: 'EUR (Cash)', type: CurrencyType.FIAT, network: null, isManual: true, precision: 2, minAmount: 50, maxAmount: 5000, enabled: true },
+        ];
+        
+        for (const currency of currencyData) {
+          try {
+            await prisma.currency.upsert({
+              where: { code: currency.code },
+              update: {},
+              create: currency as any,
+            });
+          } catch (e: any) {
+            logger.warn(`[CURRENCIES] Failed to create ${currency.code}:`, e?.message);
           }
-          logger.info('[CURRENCIES] Created currencies directly');
-          currencies = await service.getAllCurrencies();
-        } catch (directError: any) {
-          logger.error('[CURRENCIES] Direct create failed:', directError);
         }
+        
+        logger.info('[CURRENCIES] Created currencies, fetching again...');
+        currencies = await service.getAllCurrencies();
+        logger.info(`[CURRENCIES] After create: ${currencies.length} currencies`);
+      } catch (directError: any) {
+        logger.error('[CURRENCIES] Direct create failed:', directError);
       }
     }
     
