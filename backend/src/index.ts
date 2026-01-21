@@ -44,8 +44,25 @@ app.get('/currencies', async (req, res) => {
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
     const service = new CurrencyService();
-    const currencies = await service.getAllCurrencies();
+    let currencies = await service.getAllCurrencies();
     logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
+    
+    // Если валют нет - пытаемся запустить seed
+    if (currencies.length === 0) {
+      logger.warn('[CURRENCIES] No currencies found, attempting to seed...');
+      try {
+        const { exec } = await import('child_process');
+        const { promisify } = await import('util');
+        const execAsync = promisify(exec);
+        await execAsync('npx tsx src/prisma/seed.ts', { cwd: process.cwd(), timeout: 30000 });
+        logger.info('[CURRENCIES] Seed completed, fetching currencies again...');
+        currencies = await service.getAllCurrencies();
+      } catch (seedError: any) {
+        logger.error('[CURRENCIES] Seed failed:', seedError);
+        // Возвращаем пустой массив, но логируем ошибку
+      }
+    }
+    
     res.json({ currencies });
   } catch (error: any) {
     logger.error('[CURRENCIES] Error:', error);
