@@ -96,15 +96,20 @@ try {
 // Fallback удален - он перехватывал все запросы
 // Express автоматически вернет 404 для несуществующих маршрутов
 
-// Добавляем обработчик всех маршрутов для отладки
-app.use('*', (req, res, next) => {
-  logger.info(`[FALLBACK] ${req.method} ${req.originalUrl}`, {
+// Добавляем обработчик всех маршрутов для отладки (ПОСЛЕ всех маршрутов)
+app.use((req, res, next) => {
+  logger.info(`[404 FALLBACK] ${req.method} ${req.originalUrl}`, {
     path: req.path,
     originalUrl: req.originalUrl,
     baseUrl: req.baseUrl,
     url: req.url
   });
-  next();
+  res.status(404).json({ 
+    error: 'Not Found',
+    path: req.path,
+    originalUrl: req.originalUrl,
+    method: req.method
+  });
 });
 
 app.listen(PORT, () => {
