@@ -28,32 +28,52 @@ app.use((req, res, next) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  logger.info('Health check called');
+  logger.info('[HEALTH] Health check called');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Простой тест - без async
 app.get('/test', (req, res) => {
+  logger.info('[TEST] Simple test route called');
   res.json({ message: 'Simple test works' });
+});
+
+// ДУБЛИРУЕМ маршруты БЕЗ /api префикса (на случай, если Railway перехватывает /api/*)
+app.get('/currencies', async (req, res) => {
+  logger.info('[CURRENCIES] Currencies route called (without /api)');
+  try {
+    const { CurrencyService } = await import('./services/currencyService.js');
+    const service = new CurrencyService();
+    const currencies = await service.getAllCurrencies();
+    logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
+    res.json({ currencies });
+  } catch (error: any) {
+    logger.error('[CURRENCIES] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch currencies',
+      message: error?.message || 'Unknown error',
+      code: error?.code || 'UNKNOWN'
+    });
+  }
 });
 
 // Тестовый маршрут
 app.get('/api/test', (req, res) => {
-  logger.info('Test route called');
+  logger.info('[API_TEST] Test route called');
   res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
 // Временный маршрут для валют
 app.get('/api/currencies', async (req, res) => {
-  logger.info('Currencies route called');
+  logger.info('[CURRENCIES] Currencies route called');
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
     const service = new CurrencyService();
     const currencies = await service.getAllCurrencies();
-    logger.info(`Returning ${currencies.length} currencies`);
+    logger.info(`[CURRENCIES] Returning ${currencies.length} currencies`);
     res.json({ currencies });
   } catch (error: any) {
-    logger.error('Currencies error:', error);
+    logger.error('[CURRENCIES] Error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch currencies',
       message: error?.message || 'Unknown error',
