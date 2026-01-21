@@ -81,11 +81,7 @@ try {
 }
 
 // Fallback для всех остальных маршрутов (должен быть последним)
-app.use((req, res, next) => {
-  // Пропускаем уже обработанные маршруты
-  if (res.headersSent) {
-    return next();
-  }
+app.all('*', (req, res) => {
   logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 });
