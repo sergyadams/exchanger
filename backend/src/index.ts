@@ -38,9 +38,9 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Simple test works' });
 });
 
-// ДУБЛИРУЕМ маршруты БЕЗ /api префикса (на случай, если Railway перехватывает /api/*)
+// ВСЕ маршруты БЕЗ /api префикса (Railway перехватывает /api/*)
 app.get('/currencies', async (req, res) => {
-  logger.info('[CURRENCIES] Currencies route called (without /api)');
+  logger.info('[CURRENCIES] Currencies route called');
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
     const service = new CurrencyService();
@@ -92,23 +92,23 @@ try {
   // logger.info('✓ Currencies routes loaded');
   
   const { pairsRouter } = await import('./routes/pairs.js');
-  app.use('/api/pairs', pairsRouter);
+  app.use('/pairs', pairsRouter);
   logger.info('✓ Pairs routes loaded');
   
   const { ratesRouter } = await import('./routes/rates.js');
-  app.use('/api/rates', ratesRouter);
+  app.use('/rates', ratesRouter);
   logger.info('✓ Rates routes loaded');
   
   const { exchangeRouter } = await import('./routes/exchange.js');
-  app.use('/api/exchange', exchangeRouter);
+  app.use('/exchange', exchangeRouter);
   logger.info('✓ Exchange routes loaded');
   
   const { adminRouter } = await import('./routes/admin.js');
-  app.use('/api/admin', adminRouter);
+  app.use('/admin', adminRouter);
   logger.info('✓ Admin routes loaded');
   
   const { adminWalletsRouter } = await import('./routes/adminWallets.js');
-  app.use('/api/admin', adminWalletsRouter);
+  app.use('/admin', adminWalletsRouter);
   logger.info('✓ Admin wallets routes loaded');
   
   logger.info('All routes loaded successfully');

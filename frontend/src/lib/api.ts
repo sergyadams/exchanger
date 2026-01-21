@@ -3,20 +3,16 @@ import { type CreateOrderRequest, type OrderWithTimeline, type Currency, type Ex
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function getCurrencies(): Promise<{ currencies: Currency[] }> {
-  // Пробуем сначала /api/currencies, если не работает - /currencies
-  let response = await fetch(`${API_URL}/api/currencies`);
-  if (!response.ok) {
-    // Fallback: пробуем без /api префикса
-    response = await fetch(`${API_URL}/currencies`);
-    if (!response.ok) throw new Error('Failed to fetch currencies');
-  }
+  // Используем маршрут без /api префикса (Railway перехватывает /api/*)
+  const response = await fetch(`${API_URL}/currencies`);
+  if (!response.ok) throw new Error('Failed to fetch currencies');
   return response.json();
 }
 
 export async function getPairs(from?: string): Promise<{ pairs: ExchangePair[] }> {
   const url = from 
-    ? `${API_URL}/api/pairs?from=${encodeURIComponent(from)}`
-    : `${API_URL}/api/pairs`;
+    ? `${API_URL}/pairs?from=${encodeURIComponent(from)}`
+    : `${API_URL}/pairs`;
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch pairs');
   return response.json();
@@ -35,7 +31,7 @@ export async function calculateExchange(
   rateSource: string;
   updatedAt: string;
 }> {
-  const response = await fetch(`${API_URL}/api/exchange/calculate`, {
+  const response = await fetch(`${API_URL}/exchange/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fromCurrencyCode, toCurrencyCode, amountFrom }),
@@ -55,7 +51,7 @@ export async function createOrder(data: CreateOrderRequest): Promise<{
   expiresAt: string;
   status: string;
 }> {
-  const response = await fetch(`${API_URL}/api/exchange/create`, {
+  const response = await fetch(`${API_URL}/exchange/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -68,13 +64,13 @@ export async function createOrder(data: CreateOrderRequest): Promise<{
 }
 
 export async function getOrder(id: string): Promise<OrderWithTimeline> {
-  const response = await fetch(`${API_URL}/api/exchange/${id}`);
+  const response = await fetch(`${API_URL}/exchange/${id}`);
   if (!response.ok) throw new Error('Failed to fetch order');
   return response.json();
 }
 
 export async function markOrderSent(id: string): Promise<any> {
-  const response = await fetch(`${API_URL}/api/exchange/${id}/mark-sent`, {
+  const response = await fetch(`${API_URL}/exchange/${id}/mark-sent`, {
     method: 'POST',
   });
   if (!response.ok) throw new Error('Failed to mark order as sent');
@@ -93,7 +89,7 @@ export async function getRates(): Promise<{
   }>;
   updatedAt: string;
 }> {
-  const response = await fetch(`${API_URL}/api/rates`);
+  const response = await fetch(`${API_URL}/rates`);
   if (!response.ok) throw new Error('Failed to fetch rates');
   return response.json();
 }
@@ -113,13 +109,13 @@ export async function getAdminOrders(params?: {
   if (params?.page) query.append('page', params.page.toString());
   if (params?.currency) query.append('currency', params.currency);
   
-  const response = await fetch(`${API_URL}/api/admin/orders?${query}`);
+  const response = await fetch(`${API_URL}/admin/orders?${query}`);
   if (!response.ok) throw new Error('Failed to fetch orders');
   return response.json();
 }
 
 export async function getAdminOrder(id: string): Promise<OrderWithTimeline> {
-  const response = await fetch(`${API_URL}/api/admin/orders/${id}`);
+  const response = await fetch(`${API_URL}/admin/orders/${id}`);
   if (!response.ok) throw new Error('Failed to fetch order');
   return response.json();
 }
@@ -129,7 +125,7 @@ export async function updateOrderStatus(
   status: string,
   adminNote?: string
 ): Promise<any> {
-  const response = await fetch(`${API_URL}/api/admin/orders/${id}/status`, {
+  const response = await fetch(`${API_URL}/admin/orders/${id}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, adminNote }),
@@ -162,13 +158,13 @@ export async function getAdminWallets(params?: {
   if (params?.network) query.append('network', params.network);
   if (params?.isActive !== undefined) query.append('isActive', params.isActive.toString());
   
-  const response = await fetch(`${API_URL}/api/admin/wallets?${query}`);
+  const response = await fetch(`${API_URL}/admin/wallets?${query}`);
   if (!response.ok) throw new Error('Failed to fetch wallets');
   return response.json();
 }
 
 export async function getAdminWallet(id: string): Promise<{ wallet: PayInWallet }> {
-  const response = await fetch(`${API_URL}/api/admin/wallets/${id}`);
+  const response = await fetch(`${API_URL}/admin/wallets/${id}`);
   if (!response.ok) throw new Error('Failed to fetch wallet');
   return response.json();
 }
@@ -181,7 +177,7 @@ export async function createWallet(data: {
   priority?: number;
   isActive?: boolean;
 }): Promise<{ wallet: PayInWallet }> {
-  const response = await fetch(`${API_URL}/api/admin/wallets`, {
+  const response = await fetch(`${API_URL}/admin/wallets`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -201,7 +197,7 @@ export async function updateWallet(
     isActive?: boolean;
   }
 ): Promise<{ wallet: PayInWallet }> {
-  const response = await fetch(`${API_URL}/api/admin/wallets/${id}`, {
+  const response = await fetch(`${API_URL}/admin/wallets/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -214,7 +210,7 @@ export async function updateWallet(
 }
 
 export async function deleteWallet(id: string): Promise<{ wallet: PayInWallet }> {
-  const response = await fetch(`${API_URL}/api/admin/wallets/${id}`, {
+  const response = await fetch(`${API_URL}/admin/wallets/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete wallet');
