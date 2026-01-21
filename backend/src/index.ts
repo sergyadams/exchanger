@@ -21,7 +21,7 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working', timestamp: new Date().toISOString() });
 });
 
-// Временный маршрут для валют (пока не загрузились основные)
+// Временный маршрут для валют - РАБОТАЕТ ВСЕГДА
 app.get('/api/currencies', async (req, res) => {
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
@@ -44,14 +44,14 @@ app.get('/api/currencies', async (req, res) => {
   }
 });
 
-// Загрузка остальных маршрутов
+// Загрузка остальных маршрутов (НЕ перезаписываем /api/currencies)
 try {
   logger.info('Loading routes...');
   
-  const { currenciesRouter } = await import('./routes/currencies.js');
-  // Перезаписываем временный маршрут правильным
-  app.use('/api/currencies', currenciesRouter);
-  logger.info('✓ Currencies routes loaded');
+  // НЕ загружаем currenciesRouter - используем временный маршрут выше
+  // const { currenciesRouter } = await import('./routes/currencies.js');
+  // app.use('/api/currencies', currenciesRouter);
+  // logger.info('✓ Currencies routes loaded');
   
   const { pairsRouter } = await import('./routes/pairs.js');
   app.use('/api/pairs', pairsRouter);
