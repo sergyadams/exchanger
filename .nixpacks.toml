@@ -10,6 +10,7 @@ cmds = [
 [phases.build]
 cmds = [
   "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
+  "cd backend && rm -rf node_modules/.prisma node_modules/@prisma/client || echo 'Prisma client cleanup'",
   "npm run build:shared",
   "cd backend && npm run prisma:generate",
   "cd backend && npm run build"
