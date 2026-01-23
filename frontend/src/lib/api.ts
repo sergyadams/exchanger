@@ -5,9 +5,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function getCurrencies(): Promise<{ currencies: Currency[] }> {
   // Используем маршрут без /api префикса (Railway перехватывает /api/*)
-  const response = await fetch(`${API_URL}/currencies`);
-  if (!response.ok) throw new Error('Failed to fetch currencies');
-  return response.json();
+  try {
+    const response = await fetch(`${API_URL}/currencies`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('[API] Failed to fetch currencies:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        apiUrl: API_URL
+      });
+      throw new Error(errorData.message || errorData.error || 'Failed to fetch currencies');
+    }
+    return response.json();
+  } catch (error: any) {
+    console.error('[API] getCurrencies error:', error);
+    if (error.message?.includes('fetch')) {
+      throw new Error(`Cannot connect to backend at ${API_URL}. Check NEXT_PUBLIC_API_URL environment variable.`);
+    }
+    throw error;
+  }
 }
 
 export async function getPairs(from?: string): Promise<{ pairs: ExchangePair[] }> {
