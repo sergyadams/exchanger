@@ -13,7 +13,9 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:db:push": "prisma db push",
     "prisma:seed": "tsx src/prisma/seed.ts",
-    "prisma:seed:prod": "node -r esbuild-register dist/prisma/seed.js || tsx src/prisma/seed.ts"
+    "prisma:seed:prod": "node -r esbuild-register dist/prisma/seed.js || tsx src/prisma/seed.ts",
+    "prestart": "cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed' && npx prisma migrate deploy || npx prisma db push || echo 'Migration failed'",
+    "poststart": "sleep 3 && npx tsx src/prisma/seed.ts || echo 'Seed failed'"
   },
   "dependencies": {
     "@exchanger/shared": "*",
