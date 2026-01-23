@@ -2,12 +2,16 @@
 nixPkgs = ["nodejs_18", "npm-9_x"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = [
+  "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
+  "npm ci"
+]
 
 [phases.build]
 cmds = [
-  "npm run build:shared",
   "cd backend && cp prisma/schema.production.prisma prisma/schema.prisma || echo 'Schema copy failed'",
+  "npm run build:shared",
+  "cd backend && npm run prisma:generate",
   "cd backend && npm run build"
 ]
 

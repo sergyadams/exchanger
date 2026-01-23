@@ -12,8 +12,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:db:push": "prisma db push",
     "prisma:seed": "tsx src/prisma/seed.ts",
-    "prisma:seed:prod": "node -r esbuild-register dist/prisma/seed.js || tsx src/prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "prisma:seed:prod": "node -r esbuild-register dist/prisma/seed.js || tsx src/prisma/seed.ts"
   },
   "dependencies": {
     "@exchanger/shared": "*",
