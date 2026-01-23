@@ -42,6 +42,17 @@ app.get('/test', (req, res) => {
 app.get('/currencies', async (req, res) => {
   logger.info('[CURRENCIES] ====== CURRENCIES ROUTE CALLED ======');
   logger.info(`[CURRENCIES] Request from: ${req.headers.host || 'unknown'}`);
+  
+  // Проверяем наличие DATABASE_URL
+  if (!process.env.DATABASE_URL) {
+    logger.error('[CURRENCIES] DATABASE_URL not found in environment variables');
+    return res.status(500).json({ 
+      error: 'Database not configured',
+      currencies: [],
+      message: 'DATABASE_URL environment variable is missing. Please connect the database to the service in Railway.'
+    });
+  }
+  
   try {
     const { CurrencyService } = await import('./services/currencyService.js');
     const service = new CurrencyService();
